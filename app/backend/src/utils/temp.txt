@@ -1,0 +1,6 @@
+Placeholder file for utils folder
+The folder can be potentially used for: 
+-> input sanitization
+-> phone number formatting 
+-> shared date helpers
+Not yet necessary for our scope yet
