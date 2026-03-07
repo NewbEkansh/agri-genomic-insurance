@@ -1,1 +1,24 @@
+# Env files
+app/web/.env.local
+app/backend/.env
 
+# Flutter build
+app/mobile/build/
+app/mobile/.dart_tool/
+app/mobile/.flutter-plugins
+app/mobile/.flutter-plugins-dependencies
+
+# Android
+app/mobile/android/.gradle/
+app/mobile/android/local.properties
+
+# Node
+node_modules/
+app/web/.next/
+
+# Mac
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
