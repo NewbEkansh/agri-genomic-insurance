@@ -41,6 +41,7 @@ class FarmerDB(FarmerCreate):
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     baseline_ndvi: Optional[float] = None   # Captured at registration for fraud baseline
+    agro_polygon_id: Optional[str] = None 
 
     def to_dynamo(self) -> dict:
         return self.model_dump()
