@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     REGIONAL_RADIUS_KM: float = 5.0          # Radius for regional fraud check
     FRAUD_PAYOUT_MULTIPLIER: float = 0.65    # Payout % when consensus not met
 
+    INTERNAL_API_KEY: str = "yieldshield-dev-key"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

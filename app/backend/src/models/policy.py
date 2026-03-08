@@ -3,24 +3,23 @@ from typing import Optional
 from enum import Enum
 import uuid
 from datetime import datetime, timezone
+from src.db.dynamodb import floats_to_decimal
 
 
 class PolicyStatus(str, Enum):
     ACTIVE = "active"
-    TRIGGERED = "triggered"     # Payout has been initiated
-    PAID = "paid"               # Payout confirmed on-chain
+    TRIGGERED = "triggered"
+    PAID = "paid"
     EXPIRED = "expired"
     CANCELLED = "cancelled"
 
 
 class PolicyCreate(BaseModel):
-    """Request body for creating a new insurance policy for a farmer."""
     farmer_id: str
-    insured_amount_usdc: float      # Amount locked in the smart contract pool
+    insured_amount_usdc: float
 
 
 class PolicyDB(PolicyCreate):
-    """Full policy record as stored in DynamoDB."""
     policy_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     status: PolicyStatus = PolicyStatus.ACTIVE
     created_at: str = Field(
@@ -30,9 +29,8 @@ class PolicyDB(PolicyCreate):
     payout_tx_hash: Optional[str] = None
 
     def to_dynamo(self) -> dict:
-        return self.model_dump()
+        return floats_to_decimal(self.model_dump())
 
 
 class PolicyResponse(PolicyDB):
-    """Response shape — same as DB record for now."""
     pass
