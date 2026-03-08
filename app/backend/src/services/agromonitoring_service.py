@@ -88,6 +88,11 @@ def create_farm_polygon(
         polygon_id = resp.json().get("id")
         print(f"[Agromonitoring] Polygon created: {polygon_id} for {farmer_name}")
         return polygon_id
+    except requests.exceptions.HTTPError as e:
+        # Print the full response body so we can see what Agromonitoring rejected
+        print(f"[Agromonitoring] Polygon creation failed: {e}")
+        print(f"[Agromonitoring] Response body: {e.response.text}")
+        return None
     except Exception as e:
         print(f"[Agromonitoring] Polygon creation failed: {e}")
         return None
