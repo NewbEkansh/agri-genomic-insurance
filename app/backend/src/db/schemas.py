@@ -10,6 +10,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from src.db.dynamodb import get_table
 from src.core.config import settings
 from typing import Optional
+from decimal import Decimal
 
 
 # ── Farmers ──────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ def get_recent_predictions_for_farms(farm_ids: list[str], cutoff_iso: str) -> li
     for farm_id in farm_ids:
         resp = table.query(
             KeyConditionExpression=Key("farm_id").eq(farm_id) & Key("created_at").gte(cutoff_iso),
-            FilterExpression=Attr("confidence_score").gte(settings.PAYOUT_TRIGGER_THRESHOLD),
+            FilterExpression=Attr("confidence_score").gte(Decimal(str(settings.PAYOUT_TRIGGER_THRESHOLD))),
             Limit=1,
         )
         if resp.get("Count", 0) > 0:

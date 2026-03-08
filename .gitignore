@@ -22,4 +22,6 @@ app/web/.next/
 # Python
 __pycache__/
 *.pyc
-.vscode/settings.json
+
+# VSCode
+.vscode/
