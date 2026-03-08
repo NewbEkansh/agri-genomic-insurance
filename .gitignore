@@ -1,1 +1,7 @@
-
+ml_pipeline/data/raw/
+ml_pipeline/data/processed/
+*.csv
+*.zip
+*.jpg
+*.png
+*.JPG
