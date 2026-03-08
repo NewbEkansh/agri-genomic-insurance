@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:yieldshield/l10n/app_localizations.dart';
 import '../models/farmer_model.dart';
 import '../services/api_service.dart';
 
@@ -32,11 +33,12 @@ class _AlertScreenState extends State<AlertScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1B5E20),
-        title: const Text('Disease Alerts', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(l10n.diseaseAlerts, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -49,27 +51,23 @@ class _AlertScreenState extends State<AlertScreen> {
   }
 
   Widget _buildNoAlert() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.eco, color: Color(0xFF4CAF50), size: 80),
           const SizedBox(height: 16),
-          const Text(
-            'No Active Alerts',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
-          ),
+          Text(l10n.noActiveAlerts, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
           const SizedBox(height: 8),
-          Text(
-            'Your crops are healthy!',
-            style: TextStyle(color: Colors.grey[600], fontSize: 16),
-          ),
+          Text(l10n.cropsHealthy, style: TextStyle(color: Colors.grey[600], fontSize: 16)),
         ],
       ),
     );
   }
 
   Widget _buildAlertDetail() {
+    final l10n = AppLocalizations.of(context)!;
     final p = _prediction!;
     final isHighRisk = p.confidenceScore >= 0.85;
     final riskColor = isHighRisk ? const Color(0xFFEF5350) : const Color(0xFFFF9800);
@@ -78,7 +76,6 @@ class _AlertScreenState extends State<AlertScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Risk Banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -94,49 +91,30 @@ class _AlertScreenState extends State<AlertScreen> {
             ),
             child: Column(
               children: [
-                Icon(
-                  isHighRisk ? Icons.crisis_alert : Icons.warning_amber_rounded,
-                  color: Colors.white,
-                  size: 56,
-                ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                Icon(isHighRisk ? Icons.crisis_alert : Icons.warning_amber_rounded, color: Colors.white, size: 56)
+                    .animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                 const SizedBox(height: 12),
-                Text(
-                  p.diseaseType.replaceAll('_', ' ').toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
+                Text(p.diseaseType.replaceAll('_', ' ').toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 const SizedBox(height: 8),
-                Text(
-                  isHighRisk ? '⚡ Automatic payout triggered' : '⚠️ Manual review required',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
-                ),
+                Text(isHighRisk ? l10n.automaticPayout : l10n.manualReview,
+                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
               ],
             ),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
           const SizedBox(height: 16),
 
-          // Confidence Score
           _buildInfoCard(
-            title: 'AI Confidence Score',
+            title: l10n.aiConfidenceScore,
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Confidence', style: TextStyle(color: Color(0xFF666666))),
-                    Text(
-                      '${(p.confidenceScore * 100).toInt()}%',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: riskColor,
-                      ),
-                    ),
+                    Text(l10n.confidence, style: const TextStyle(color: Color(0xFF666666))),
+                    Text('${(p.confidenceScore * 100).toInt()}%',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: riskColor)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -153,15 +131,9 @@ class _AlertScreenState extends State<AlertScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Threshold: 85%', style: TextStyle(color: Color(0xFF999999), fontSize: 12)),
-                    Text(
-                      isHighRisk ? 'AUTO-PAYOUT TRIGGERED' : 'BELOW THRESHOLD',
-                      style: TextStyle(
-                        color: riskColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(l10n.threshold, style: const TextStyle(color: Color(0xFF999999), fontSize: 12)),
+                    Text(isHighRisk ? l10n.autoPayoutTriggered : l10n.belowThreshold,
+                        style: TextStyle(color: riskColor, fontSize: 11, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],
@@ -170,43 +142,23 @@ class _AlertScreenState extends State<AlertScreen> {
 
           const SizedBox(height: 12),
 
-          // Payout Info
           _buildInfoCard(
-            title: 'Payout Details',
+            title: l10n.payoutDetails,
             child: Row(
               children: [
-                _PayoutStat(
-                  label: 'Payout %',
-                  value: '${p.payoutPercent}%',
-                  color: const Color(0xFF4CAF50),
-                ),
-                _PayoutStat(
-                  label: 'Detected',
-                  value: _formatDate(p.detectedAt),
-                  color: const Color(0xFF2196F3),
-                ),
-                _PayoutStat(
-                  label: 'Oracle',
-                  value: 'Auto',
-                  color: const Color(0xFF9C27B0),
-                ),
+                _PayoutStat(label: l10n.payoutPercent, value: '${p.payoutPercent}%', color: const Color(0xFF4CAF50)),
+                _PayoutStat(label: l10n.detected, value: _formatDate(p.detectedAt), color: const Color(0xFF2196F3)),
+                _PayoutStat(label: l10n.oracle, value: l10n.auto, color: const Color(0xFF9C27B0)),
               ],
             ),
           ),
 
           const SizedBox(height: 12),
 
-          // Bedrock AI Summary
           _buildInfoCard(
-            title: '🤖 AWS Bedrock Analysis',
-            child: Text(
-              p.bedrockAssessment,
-              style: const TextStyle(
-                color: Color(0xFF444444),
-                fontSize: 14,
-                height: 1.7,
-              ),
-            ),
+            title: l10n.bedrockAnalysis,
+            child: Text(p.bedrockAssessment,
+                style: const TextStyle(color: Color(0xFF444444), fontSize: 14, height: 1.7)),
           ),
 
           const SizedBox(height: 80),
@@ -222,25 +174,12 @@ class _AlertScreenState extends State<AlertScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1A1A2E))),
           const SizedBox(height: 14),
           child,
         ],
@@ -248,9 +187,7 @@ class _AlertScreenState extends State<AlertScreen> {
     ).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideY(begin: 0.05);
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
+  String _formatDate(DateTime dt) => '${dt.day}/${dt.month}/${dt.year}';
 }
 
 class _PayoutStat extends StatelessWidget {

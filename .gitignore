@@ -22,6 +22,7 @@ app/web/.next/
 # Python
 __pycache__/
 *.pyc
+.vscode/
 .vscode/settings.json
 
 ml_pipeline/data/raw/

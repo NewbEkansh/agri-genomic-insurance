@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:yieldshield/l10n/app_localizations.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/alert_screen.dart';
 import 'screens/payout_screen.dart';
@@ -16,14 +18,50 @@ void main() {
   runApp(const YieldShieldApp());
 }
 
-class YieldShieldApp extends StatelessWidget {
+class YieldShieldApp extends StatefulWidget {
   const YieldShieldApp({super.key});
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _YieldShieldAppState? state =
+        context.findAncestorStateOfType<_YieldShieldAppState>();
+    state?.setLocale(newLocale);
+  }
+
+  @override
+  State<YieldShieldApp> createState() => _YieldShieldAppState();
+}
+
+class _YieldShieldAppState extends State<YieldShieldApp> {
+  Locale _locale = const Locale('en');
+
+  void setLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'YieldShield',
       debugShowCheckedModeBanner: false,
+      locale: _locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('hi'),
+        Locale('ta'),
+        Locale('te'),
+        Locale('bn'),
+        Locale('mr'),
+        Locale('gu'),
+        Locale('kn'),
+        Locale('ml'),
+        Locale('pa'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2E7D32),
@@ -56,6 +94,7 @@ class _MainNavState extends State<MainNav> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -76,26 +115,26 @@ class _MainNavState extends State<MainNav> {
           onDestinationSelected: (i) => setState(() => _currentIndex = i),
           backgroundColor: Colors.white,
           indicatorColor: const Color(0xFF2E7D32).withOpacity(0.12),
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard, color: Color(0xFF2E7D32)),
-              label: 'Dashboard',
+              icon: const Icon(Icons.dashboard_outlined),
+              selectedIcon: const Icon(Icons.dashboard, color: Color(0xFF2E7D32)),
+              label: l10n.dashboard,
             ),
             NavigationDestination(
-              icon: Icon(Icons.warning_amber_outlined),
-              selectedIcon: Icon(Icons.warning_amber_rounded, color: Color(0xFF2E7D32)),
-              label: 'Alerts',
+              icon: const Icon(Icons.warning_amber_outlined),
+              selectedIcon: const Icon(Icons.warning_amber_rounded, color: Color(0xFF2E7D32)),
+              label: l10n.alerts,
             ),
             NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF2E7D32)),
-              label: 'Payouts',
+              icon: const Icon(Icons.receipt_long_outlined),
+              selectedIcon: const Icon(Icons.receipt_long, color: Color(0xFF2E7D32)),
+              label: l10n.payouts,
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: Color(0xFF2E7D32)),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person, color: Color(0xFF2E7D32)),
+              label: l10n.profile,
             ),
           ],
         ),
