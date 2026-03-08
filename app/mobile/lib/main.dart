@@ -6,6 +6,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/alert_screen.dart';
 import 'screens/payout_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/scan_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +88,7 @@ class _MainNavState extends State<MainNav> {
 
   final List<Widget> _screens = const [
     DashboardScreen(),
+    ScanScreen(),
     AlertScreen(),
     PayoutScreen(),
     ProfileScreen(),
@@ -120,6 +122,11 @@ class _MainNavState extends State<MainNav> {
               icon: const Icon(Icons.dashboard_outlined),
               selectedIcon: const Icon(Icons.dashboard, color: Color(0xFF2E7D32)),
               label: l10n.dashboard,
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.camera_alt_outlined),
+              selectedIcon: Icon(Icons.camera_alt, color: Color(0xFF2E7D32)),
+              label: 'Scan',
             ),
             NavigationDestination(
               icon: const Icon(Icons.warning_amber_outlined),

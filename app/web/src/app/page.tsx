@@ -35,12 +35,9 @@ export default function LandingPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); if (!loginId.trim()) return;
     setLoading(true); setError('');
-    try {
-      await api.getFarmer(loginId.trim());
-      localStorage.setItem('farmer_id', loginId.trim());
-      router.push('/dashboard');
-    } catch { setError('Farmer ID not found. Check your ID and try again.'); }
-    finally { setLoading(false); }
+    localStorage.setItem('farmer_id', loginId.trim());
+    router.push('/dashboard');
+    setLoading(false);
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -134,7 +131,7 @@ export default function LandingPage() {
             </button>
             <p style={{ fontSize:12,fontFamily:'var(--font-mono)',color:'#4b5563',textAlign:'center' as const }}>
               Demo ID:{' '}
-              <button type="button" onClick={() => setLoginId('demo-farmer-001')}
+              <button type="button" onClick={() => setLoginId('487b3114-80ba-4e64-8731-283be03f998e')}
                 style={{ background:'none',border:'none',color:'#16a34a',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-mono)',fontSize:12 }}>
                 demo-farmer-001
               </button>

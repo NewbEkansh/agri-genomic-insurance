@@ -61,56 +61,211 @@ class ApiService {
     },
   ];
 
-  // ── API Methods ────────────────────────────────────────────────────────────
-  // NOTE: Paths match the backend FastAPI routes from the integration guide
+  static final List<Map<String, dynamic>> _mockPolicies = [
+    {
+      'policy_id': 'POL_001',
+      'farm_id': 'FARM_001',
+      'insured_amount_eth': 1.0,
+      'status': 'active',
+      'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+    },
+  ];
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> _get(String path) async {
+    final res = await http.get(Uri.parse('$baseUrl$path'));
+    if (res.statusCode != 200) throw Exception('GET $path failed: ${res.statusCode}');
+    return jsonDecode(res.body);
+  }
+
+  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception('POST $path failed: ${res.statusCode}');
+    }
+    return jsonDecode(res.body);
+  }
+
+  Future<Map<String, dynamic>> _patch(String path, Map<String, dynamic> body) async {
+    final res = await http.patch(
+      Uri.parse('$baseUrl$path'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (res.statusCode != 200) throw Exception('PATCH $path failed: ${res.statusCode}');
+    return jsonDecode(res.body);
+  }
+
+  // ── Health ─────────────────────────────────────────────────────────────────
+
+  /// GET /health/
+  Future<bool> checkHealth() async {
+    if (mockMode) return true;
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/health/'));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ── Farmers ────────────────────────────────────────────────────────────────
+
+  /// POST /farmers/register
+  Future<Farmer> registerFarmer({
+    required String name,
+    required String walletAddress,
+    required String farmId,
+    required String location,
+    required String cropType,
+    required double insuredAmountEth,
+  }) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return Farmer.fromJson(_mockFarmer);
+    }
+    final data = await _post('/farmers/register', {
+      'name': name,
+      'wallet_address': walletAddress,
+      'farm_id': farmId,
+      'location': location,
+      'crop_type': cropType,
+      'insured_amount_eth': insuredAmountEth,
+    });
+    return Farmer.fromJson(data);
+  }
+
+  /// GET /farmers/{farmer_id}
   Future<Farmer> getFarmer(String farmerId) async {
     if (mockMode) {
       await Future.delayed(const Duration(milliseconds: 400));
       return Farmer.fromJson(_mockFarmer);
     }
-    // GET /farmers/{farmer_id}
-    final res = await http.get(Uri.parse('$baseUrl/farmers/$farmerId'));
-    if (res.statusCode != 200) throw Exception('Failed to load farmer');
-    return Farmer.fromJson(jsonDecode(res.body));
+    final data = await _get('/farmers/$farmerId');
+    return Farmer.fromJson(data);
   }
 
+  /// GET /farmers/{farmer_id}/farm-health
   Future<FarmHealth> getFarmHealth(String farmerId) async {
     if (mockMode) {
       await Future.delayed(const Duration(milliseconds: 300));
       return FarmHealth.fromJson(_mockHealth);
     }
-    // GET /farmers/{farmer_id}/farm-health
-    final res = await http.get(Uri.parse('$baseUrl/farmers/$farmerId/farm-health'));
-    if (res.statusCode != 200) throw Exception('Failed to load farm health');
-    return FarmHealth.fromJson(jsonDecode(res.body));
+    final data = await _get('/farmers/$farmerId/farm-health');
+    return FarmHealth.fromJson(data);
   }
 
+  /// GET /farmers/{farmer_id}/predictions
   Future<Prediction?> getLatestPrediction(String farmerId) async {
     if (mockMode) {
       await Future.delayed(const Duration(milliseconds: 350));
       return Prediction.fromJson(_mockPrediction);
     }
-    // GET /predictions/farm/{farm_id}
-    final res = await http.get(Uri.parse('$baseUrl/predictions/farm/$farmerId'));
-    if (res.statusCode == 404) return null;
-    if (res.statusCode != 200) throw Exception('Failed to load prediction');
-    final data = jsonDecode(res.body);
-    final predictions = data['predictions'] as List?;
-    if (predictions == null || predictions.isEmpty) return null;
-    return Prediction.fromJson(predictions.first);
+    try {
+      final data = await _get('/predictions/farm/$farmerId');
+      final predictions = data['predictions'] as List?;
+      if (predictions == null || predictions.isEmpty) return null;
+      return Prediction.fromJson(predictions.first);
+    } catch (_) {
+      return null;
+    }
   }
 
+  /// GET /farmers/{farmer_id}/payouts
   Future<List<PayoutRecord>> getPayoutHistory(String farmerId) async {
     if (mockMode) {
       await Future.delayed(const Duration(milliseconds: 300));
       return _mockPayouts.map((p) => PayoutRecord.fromJson(p)).toList();
     }
-    // GET /farmers/{farmer_id}/payouts
-    final res = await http.get(Uri.parse('$baseUrl/farmers/$farmerId/payouts'));
-    if (res.statusCode != 200) throw Exception('Failed to load payouts');
-    final data = jsonDecode(res.body);
-    final payouts = data['payouts'] as List? ?? [];
+    final data = await _get('/farmers/$farmerId/payouts');
+    final List payouts = data['payouts'] ?? data;
     return payouts.map((p) => PayoutRecord.fromJson(p)).toList();
   }
+
+  /// GET /farmers/{farmer_id}/policies
+  Future<List<Map<String, dynamic>>> getFarmerPolicies(String farmerId) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return _mockPolicies;
+    }
+    final data = await _get('/farmers/$farmerId/policies');
+    return List<Map<String, dynamic>>.from(data['policies'] ?? data);
+  }
+
+  // ── Policies ───────────────────────────────────────────────────────────────
+
+  /// POST /policies/create
+  Future<Map<String, dynamic>> createPolicy({
+    required String farmerId,
+    required double insuredAmountEth,
+    required String cropType,
+  }) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return _mockPolicies.first;
+    }
+    return await _post('/policies/create', {
+      'farmer_id': farmerId,
+      'insured_amount_eth': insuredAmountEth,
+      'crop_type': cropType,
+    });
+  }
+
+  /// GET /policies/{policy_id}
+  Future<Map<String, dynamic>> getPolicy(String policyId) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return _mockPolicies.first;
+    }
+    return await _get('/policies/$policyId');
+  }
+
+  /// PATCH /policies/{policy_id}/cancel
+  Future<bool> cancelPolicy(String policyId) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return true;
+    }
+    try {
+      await _patch('/policies/$policyId/cancel', {});
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ── Predictions & Payouts ──────────────────────────────────────────────────
+
+  /// GET /predictions/farm/{farm_id}
+  Future<List<Prediction>> getFarmPredictions(String farmId) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return [Prediction.fromJson(_mockPrediction)];
+    }
+    final data = await _get('/predictions/farm/$farmId');
+    final List list = data['predictions'] ?? data;
+    return list.map((p) => Prediction.fromJson(p)).toList();
+  }
+
+  /// GET /predictions/payout/{payout_id}
+  Future<PayoutRecord?> getPayoutById(String payoutId) async {
+    if (mockMode) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return PayoutRecord.fromJson(_mockPayouts.first);
+    }
+    try {
+      final data = await _get('/predictions/payout/$payoutId');
+      return PayoutRecord.fromJson(data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // NOTE: POST /predictions/score is for the AI teammate ONLY.
+  // Frontend does NOT call this directly.
 }

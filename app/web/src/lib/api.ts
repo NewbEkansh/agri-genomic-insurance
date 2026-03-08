@@ -1,7 +1,10 @@
 import type { Farmer, FarmerInput, FarmHealth, Policy, Prediction, PayoutRecord } from '@/types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
-const MOCK = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
+// Line 3 — fix env var name to match your .env.local
+const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://13.60.58.137:8000';
+
+// Line 4 — fix the backwards logic
+const MOCK = process.env.NEXT_PUBLIC_MOCK_MODE !== 'false';
 
 const MOCK_FARMER: Farmer = {
   farmer_id: 'demo-farmer-001', name: 'Ekansh Kumar', phone: '+919876543210',
@@ -43,7 +46,9 @@ const MOCK_PAYOUTS: PayoutRecord[] = [{
 }];
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
+  const res = await fetch(`${BASE}${path}`, {
+    headers: { 'X-API-Key': 'yieldshield-dev-key' },  // ← add this
+  });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json();
 }
