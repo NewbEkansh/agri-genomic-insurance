@@ -22,6 +22,17 @@ app/web/.next/
 # Python
 __pycache__/
 *.pyc
-
-# VSCode
 .vscode/
+.vscode/settings.json
+
+ml_pipeline/data/raw/
+ml_pipeline/data/processed/
+*.csv
+*.zip
+*.jpg
+*.png
+*.JPG
+
+# YOLOv8 outputs (prevents committing 100s of metric charts and temporary runs)
+runs/
+yolov8_*/

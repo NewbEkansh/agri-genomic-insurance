@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:yieldshield/l10n/app_localizations.dart';
 import '../models/farmer_model.dart';
 import '../services/api_service.dart';
 
@@ -34,20 +35,19 @@ class _PayoutScreenState extends State<PayoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totalEth = _payouts.fold(0.0, (sum, p) => sum + p.amountEth);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1B5E20),
-        title: const Text('Payout History',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(l10n.payoutHistory, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
           : RefreshIndicator(
               onRefresh: _loadData,
               color: const Color(0xFF2E7D32),
@@ -60,10 +60,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: _payouts.length,
-                            itemBuilder: (ctx, i) => _PayoutCard(
-                              payout: _payouts[i],
-                              index: i,
-                            ),
+                            itemBuilder: (ctx, i) => _PayoutCard(payout: _payouts[i], index: i),
                           ),
                   ),
                 ],
@@ -73,6 +70,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
   }
 
   Widget _buildSummaryBanner(double totalEth) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -86,31 +84,23 @@ class _PayoutScreenState extends State<PayoutScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _SummaryItem(
-            label: 'Total Payouts',
-            value: '${_payouts.length}',
-            icon: Icons.receipt_long,
-          ),
+          _SummaryItem(label: l10n.totalPayouts, value: '${_payouts.length}', icon: Icons.receipt_long),
           Container(width: 1, height: 40, color: Colors.white24),
-          _SummaryItem(
-            label: 'Total ETH Received',
-            value: '${totalEth.toStringAsFixed(2)} ETH',
-            icon: Icons.account_balance_wallet_outlined,
-          ),
+          _SummaryItem(label: l10n.totalEthReceived, value: '${totalEth.toStringAsFixed(2)} ETH', icon: Icons.account_balance_wallet_outlined),
         ],
       ),
     );
   }
 
   Widget _buildEmpty() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history, color: Colors.grey[400], size: 70),
           const SizedBox(height: 16),
-          const Text('No payouts yet',
-              style: TextStyle(fontSize: 18, color: Color(0xFF666666))),
+          Text(l10n.noPayoutsYet, style: const TextStyle(fontSize: 18, color: Color(0xFF666666))),
         ],
       ),
     );
@@ -124,17 +114,14 @@ class _PayoutCard extends StatelessWidget {
   const _PayoutCard({required this.payout, required this.index});
 
   Future<void> _openEtherscan(BuildContext context) async {
-    final url = Uri.parse(
-        'https://sepolia.etherscan.io/tx/${payout.txHash}');
+    final l10n = AppLocalizations.of(context)!;
+    final url = Uri.parse('https://sepolia.etherscan.io/tx/${payout.txHash}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open Etherscan'),
-            backgroundColor: Color(0xFFEF5350),
-          ),
+          SnackBar(content: Text(l10n.couldNotOpenEtherscan), backgroundColor: const Color(0xFFEF5350)),
         );
       }
     }
@@ -142,35 +129,25 @@ class _PayoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isFullPayout = payout.payoutPercent == 100;
-    final color =
-        isFullPayout ? const Color(0xFF4CAF50) : const Color(0xFFFF9800);
-    final shortHash =
-        '${payout.txHash.substring(0, 10)}...${payout.txHash.substring(payout.txHash.length - 6)}';
+    final color = isFullPayout ? const Color(0xFF4CAF50) : const Color(0xFFFF9800);
+    final shortHash = '${payout.txHash.substring(0, 10)}...${payout.txHash.substring(payout.txHash.length - 6)}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Column(
         children: [
-          // Header
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: color.withOpacity(0.08),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -179,38 +156,21 @@ class _PayoutCard extends StatelessWidget {
                   children: [
                     Icon(Icons.check_circle, color: color, size: 18),
                     const SizedBox(width: 6),
-                    Text(
-                      payout.diseaseType.replaceAll('_', ' ').toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text(payout.diseaseType.replaceAll('_', ' ').toUpperCase(),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13)),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
                   child: Text(
-                    isFullPayout
-                        ? 'FULL PAYOUT'
-                        : 'PARTIAL (${payout.payoutPercent}%)',
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
+                    isFullPayout ? l10n.fullPayout : 'PARTIAL (${payout.payoutPercent}%)',
+                    style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Body
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -218,42 +178,26 @@ class _PayoutCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Amount',
-                        style: TextStyle(
-                            color: Color(0xFF666666), fontSize: 13)),
-                    Text(
-                      '${payout.amountEth} ETH',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Color(0xFF1A1A2E)),
-                    ),
+                    Text(l10n.amount, style: const TextStyle(color: Color(0xFF666666), fontSize: 13)),
+                    Text('${payout.amountEth} ETH',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1A1A2E))),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Date',
-                        style: TextStyle(
-                            color: Color(0xFF666666), fontSize: 13)),
-                    Text(
-                      _formatDate(payout.timestamp),
-                      style: const TextStyle(
-                          color: Color(0xFF444444), fontSize: 13),
-                    ),
+                    Text(l10n.date, style: const TextStyle(color: Color(0xFF666666), fontSize: 13)),
+                    Text(_formatDate(payout.timestamp), style: const TextStyle(color: Color(0xFF444444), fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Status',
-                        style: TextStyle(
-                            color: Color(0xFF666666), fontSize: 13)),
+                    Text(l10n.status, style: const TextStyle(color: Color(0xFF666666), fontSize: 13)),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: payout.status == 'confirmed'
                             ? const Color(0xFF4CAF50).withOpacity(0.1)
@@ -263,9 +207,7 @@ class _PayoutCard extends StatelessWidget {
                       child: Text(
                         payout.status.toUpperCase(),
                         style: TextStyle(
-                          color: payout.status == 'confirmed'
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFFF9800),
+                          color: payout.status == 'confirmed' ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
@@ -276,57 +218,35 @@ class _PayoutCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 const Divider(color: Color(0xFFEEEEEE)),
                 const SizedBox(height: 8),
-
-                // TX Hash row
                 Row(
                   children: [
                     const Icon(Icons.link, color: Color(0xFF2196F3), size: 16),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        shortHash,
-                        style: const TextStyle(
-                          color: Color(0xFF2196F3),
-                          fontSize: 13,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
+                      child: Text(shortHash,
+                          style: const TextStyle(color: Color(0xFF2196F3), fontSize: 13, fontFamily: 'monospace')),
                     ),
-                    // Copy button
                     GestureDetector(
                       onTap: () {
-                        Clipboard.setData(
-                            ClipboardData(text: payout.txHash));
+                        Clipboard.setData(ClipboardData(text: payout.txHash));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('TX hash copied!'),
-                            duration: Duration(seconds: 2),
-                            backgroundColor: Color(0xFF2E7D32),
-                          ),
+                          SnackBar(content: Text(l10n.txHashCopied), duration: const Duration(seconds: 2), backgroundColor: const Color(0xFF2E7D32)),
                         );
                       },
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(Icons.copy,
-                            color: Color(0xFF999999), size: 16),
+                        decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(6)),
+                        child: const Icon(Icons.copy, color: Color(0xFF999999), size: 16),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Etherscan button — actually opens the URL
                     GestureDetector(
                       onTap: () => _openEtherscan(context),
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1565C0).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(Icons.open_in_new,
-                            color: Color(0xFF1565C0), size: 16),
+                            color: const Color(0xFF1565C0).withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                        child: const Icon(Icons.open_in_new, color: Color(0xFF1565C0), size: 16),
                       ),
                     ),
                   ],
@@ -336,18 +256,11 @@ class _PayoutCard extends StatelessWidget {
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(
-            delay: Duration(milliseconds: index * 100), duration: 400.ms)
-        .slideX(begin: 0.05);
+    ).animate().fadeIn(delay: Duration(milliseconds: index * 100), duration: 400.ms).slideX(begin: 0.05);
   }
 
   String _formatDate(DateTime dt) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }
@@ -357,8 +270,7 @@ class _SummaryItem extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _SummaryItem(
-      {required this.label, required this.value, required this.icon});
+  const _SummaryItem({required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -366,14 +278,8 @@ class _SummaryItem extends StatelessWidget {
       children: [
         Icon(icon, color: Colors.white70, size: 20),
         const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16)),
-        Text(label,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.7), fontSize: 12)),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
       ],
     );
   }
