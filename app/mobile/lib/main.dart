@@ -7,6 +7,7 @@ import 'screens/alert_screen.dart';
 import 'screens/payout_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,16 +47,9 @@ class _YieldShieldAppState extends State<YieldShieldApp> {
       debugShowCheckedModeBanner: false,
       locale: _locale,
       supportedLocales: const [
-        Locale('en'),
-        Locale('hi'),
-        Locale('ta'),
-        Locale('te'),
-        Locale('bn'),
-        Locale('mr'),
-        Locale('gu'),
-        Locale('kn'),
-        Locale('ml'),
-        Locale('pa'),
+        Locale('en'), Locale('hi'), Locale('ta'), Locale('te'),
+        Locale('bn'), Locale('mr'), Locale('gu'), Locale('kn'),
+        Locale('ml'), Locale('pa'),
       ],
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -71,7 +65,12 @@ class _YieldShieldAppState extends State<YieldShieldApp> {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      home: const MainNav(),
+      // ← Start at login screen
+      home: const LoginScreen(),
+      // ← After login, navigate to /home
+      routes: {
+        '/home': (context) => const MainNav(),
+      },
     );
   }
 }

@@ -2,18 +2,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { Leaf, ShieldCheck, Zap, Globe, ArrowRight, Loader2 } from 'lucide-react';
-import type { FarmerInput } from '@/types';
+import { Leaf, ShieldCheck, Zap, Globe, ArrowRight, Loader2, Phone, ChevronLeft } from 'lucide-react';
 
-type Mode = 'login' | 'register';
+type Step = 'phone' | 'otp' | 'register';
 const CROPS = ['rice','wheat','maize','cotton','soybean'];
 const LANGS = [['hindi','Hindi'],['telugu','Telugu'],['tamil','Tamil'],['marathi','Marathi'],['english','English']];
 
 const S: Record<string, React.CSSProperties> = {
-  input: { width:'100%',background:'#1a1f0e',border:'1px solid #242b12',borderRadius:12,padding:'10px 14px',
-    fontSize:13,fontFamily:'var(--font-mono)',color:'#e5e7eb',outline:'none' },
-  btn: { width:'100%',background:'#4ade80',color:'#0a0c08',fontFamily:'var(--font-mono)',fontWeight:600,
-    fontSize:14,padding:'11px 20px',borderRadius:12,border:'none',cursor:'pointer',
+  input: { width:'100%',background:'#1a1f0e',border:'1px solid #242b12',borderRadius:12,
+    padding:'10px 14px',fontSize:13,fontFamily:'var(--font-mono)',color:'#e5e7eb',
+    outline:'none',boxSizing:'border-box' as const },
+  btn: { width:'100%',background:'#4ade80',color:'#0a0c08',fontFamily:'var(--font-mono)',
+    fontWeight:600,fontSize:14,padding:'11px 20px',borderRadius:12,border:'none',cursor:'pointer',
     display:'flex',alignItems:'center',justifyContent:'center',gap:8 },
   label: { fontSize:11,fontFamily:'var(--font-mono)',textTransform:'uppercase' as const,
     letterSpacing:'0.1em',color:'#6b7280',display:'block',marginBottom:6 },
@@ -21,45 +21,61 @@ const S: Record<string, React.CSSProperties> = {
 
 export default function LandingPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('login');
+  const [step, setStep]       = useState<Step>('phone');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [loginId, setLoginId] = useState('');
-  const [form, setForm] = useState<FarmerInput>({
-    name:'',phone:'',wallet_address:'',crop_type:'rice',
-    farm_lat:0,farm_lon:0,farm_area_hectares:0,language:'hindi',
+  const [error, setError]     = useState('');
+  const [phone, setPhone]     = useState('');
+  const [otp, setOtp]         = useState('');
+  const [jwtToken, setJwtToken] = useState('');
+  const [form, setForm] = useState({
+    name:'', crop_type:'rice', farm_lat:0, farm_lon:0,
+    farm_area_hectares:0, language:'hindi',
   });
 
-  function set(k: keyof FarmerInput, v: string | number) { setForm(f => ({ ...f, [k]: v })); }
+  function setField(k: string, v: string | number) { setForm(f => ({ ...f, [k]: v })); }
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault(); if (!loginId.trim()) return;
-    setLoading(true); setError('');
-    localStorage.setItem('farmer_id', loginId.trim());
-    router.push('/dashboard');
-    setLoading(false);
+  // Step 1 — POST /auth/send-otp
+  async function handleSendOtp(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('');
+    try {
+      await api.sendOtp(phone.trim());
+      setStep('otp');
+    } catch { setError('Could not send OTP. Check the number and try again.'); }
+    finally { setLoading(false); }
   }
 
+  // Step 2 — POST /auth/verify-otp → JWT + farmer_id + is_new_farmer
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('');
+    try {
+      const res = await api.verifyOtp(phone.trim(), otp.trim());
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('farmer_id', res.farmer_id);
+      if (res.is_new_farmer) { setJwtToken(res.token); setStep('register'); }
+      else { router.push('/dashboard'); }
+    } catch { setError('Invalid OTP. Please try again.'); }
+    finally { setLoading(false); }
+  }
+
+  // Step 3 — POST /farmers/register (new farmers only, no wallet needed)
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError('');
     try {
-      const res = await api.registerFarmer(form);
+      const res = await api.registerFarmer({ ...form, phone: phone.trim() }, jwtToken);
       localStorage.setItem('farmer_id', res.farmer_id);
       router.push('/dashboard');
-    } catch { setError('Registration failed. Please check your details.'); }
+    } catch { setError('Registration failed. Please try again.'); }
     finally { setLoading(false); }
   }
 
   return (
-    <div style={{ minHeight:'100vh',display:'flex',flexDirection:'row' as const }}>
+    <div style={{ minHeight:'100vh',display:'flex' }}>
       {/* Hero */}
       <div style={{ flex:1,display:'flex',flexDirection:'column' as const,justifyContent:'space-between',
         padding:64,background:'#111408',borderRight:'1px solid #242b12',position:'relative',overflow:'hidden' }}>
         <div style={{ position:'absolute',inset:0,opacity:0.05,backgroundImage:
           'linear-gradient(#4ade8022 1px,transparent 1px),linear-gradient(90deg,#4ade8022 1px,transparent 1px)',
           backgroundSize:'40px 40px' }} />
-        <div style={{ position:'absolute',top:'30%',left:'20%',width:384,height:384,
-          borderRadius:'50%',background:'rgba(74,222,128,0.04)',filter:'blur(64px)',pointerEvents:'none' }} />
         <div style={{ position:'relative',display:'flex',alignItems:'center',gap:12 }}>
           <span style={{ display:'flex',alignItems:'center',justifyContent:'center',width:40,height:40,
             borderRadius:12,background:'#14532d',border:'1px solid #16a34a' }}>
@@ -70,95 +86,119 @@ export default function LandingPage() {
           </span>
         </div>
         <div style={{ position:'relative' }}>
-          <p style={{ fontSize:11,fontFamily:'var(--font-mono)',textTransform:'uppercase',letterSpacing:'0.1em',color:'#16a34a',marginBottom:16 }}>
-            AWS AI for Bharat Hackathon
-          </p>
-          <h1 style={{ fontFamily:'var(--font-display)',fontSize:44,fontWeight:700,lineHeight:1.2,color:'#f3f4f6',margin:'0 0 20px' }}>
-            Crop insurance that pays<br /><span style={{ color:'#4ade80' }}>before you ask.</span>
+          <p style={{ fontSize:11,fontFamily:'var(--font-mono)',textTransform:'uppercase',
+            letterSpacing:'0.1em',color:'#16a34a',marginBottom:16 }}>AWS AI for Bharat Hackathon</p>
+          <h1 style={{ fontFamily:'var(--font-display)',fontSize:44,fontWeight:700,
+            lineHeight:1.2,color:'#f3f4f6',margin:'0 0 20px' }}>
+            Crop insurance that pays<br/><span style={{ color:'#4ade80' }}>before you ask.</span>
           </h1>
           <p style={{ color:'#9ca3af',fontSize:15,maxWidth:380,lineHeight:1.7,marginBottom:28 }}>
             AI detects disease. Satellite confirms damage. Your wallet receives ETH — automatically, in seconds.
           </p>
           <div style={{ display:'flex',flexDirection:'column' as const,gap:12 }}>
-            {[[Zap,'Instant payouts — no paperwork'],[ShieldCheck,'Fraud detection via satellite NDVI'],[Globe,'On-chain transparency on Sepolia']].map(([Icon, label]: any) => (
+            {([[Zap,'Instant payouts — no paperwork'],[ShieldCheck,'Fraud detection via satellite NDVI'],
+               [Globe,'On-chain transparency on Sepolia']] as const).map(([Icon,label]:any) => (
               <div key={label} style={{ display:'flex',alignItems:'center',gap:12,fontSize:14,color:'#9ca3af' }}>
                 <span style={{ display:'flex',alignItems:'center',justifyContent:'center',width:28,height:28,
                   borderRadius:8,background:'#14532d',border:'1px solid #16a34a',flexShrink:0 }}>
-                  <Icon size={13} color="#4ade80" />
-                </span>
-                {label}
+                  <Icon size={13} color="#4ade80"/></span>{label}
               </div>
             ))}
           </div>
         </div>
         <p style={{ position:'relative',fontSize:11,fontFamily:'var(--font-mono)',color:'#4b5563' }}>
-          Contract:{' '}
-          <a href="https://sepolia.etherscan.io/address/0x722bEC25d44dEED2F720ebee6415854A039DDA9C"
+          Contract: <a href="https://sepolia.etherscan.io/address/0x722bEC25d44dEED2F720ebee6415854A039DDA9C"
             target="_blank" rel="noopener noreferrer" style={{ color:'#6b7280',textDecoration:'none' }}>
-            0x722b…DA9C ↗
-          </a>
+            0x722b…DA9C ↗</a>
         </p>
       </div>
 
-      {/* Form panel */}
-      <div style={{ width:460,display:'flex',flexDirection:'column' as const,justifyContent:'center',padding:64 }}>
-        <div style={{ display:'flex',borderRadius:12,overflow:'hidden',border:'1px solid #242b12',marginBottom:32,alignSelf:'flex-start' }}>
-          {(['login','register'] as Mode[]).map(m => (
-            <button key={m} onClick={() => { setMode(m); setError(''); }}
-              style={{ padding:'8px 20px',fontSize:13,fontFamily:'var(--font-mono)',
-                background: mode===m ? '#14532d' : 'none',
-                color: mode===m ? '#4ade80' : '#6b7280',border:'none',cursor:'pointer',
-                textTransform:'capitalize' as const }}>
-              {m === 'login' ? 'Sign In' : 'Register'}
-            </button>
-          ))}
-        </div>
+      {/* Form Panel */}
+      <div style={{ width:460,display:'flex',flexDirection:'column' as const,
+        justifyContent:'center',padding:64,overflowY:'auto' as const }}>
 
-        {mode === 'login' ? (
-          <form onSubmit={handleLogin} style={{ display:'flex',flexDirection:'column' as const,gap:20 }}>
+        {step === 'phone' && (
+          <form onSubmit={handleSendOtp} style={{ display:'flex',flexDirection:'column' as const,gap:20 }}>
             <div>
-              <h2 style={{ fontFamily:'var(--font-display)',fontSize:26,fontWeight:600,marginBottom:6 }}>Welcome back</h2>
-              <p style={{ fontSize:14,color:'#9ca3af' }}>Enter your Farmer ID to access your dashboard.</p>
+              <h2 style={{ fontFamily:'var(--font-display)',fontSize:26,fontWeight:600,marginBottom:6 }}>Get started</h2>
+              <p style={{ fontSize:14,color:'#9ca3af' }}>Enter your phone — we'll send a one-time password.</p>
             </div>
             <div>
-              <label style={S.label}>Farmer ID</label>
-              <input style={S.input} value={loginId} onChange={e => setLoginId(e.target.value)} placeholder="e.g. demo-farmer-001" />
+              <label style={S.label}>Phone Number</label>
+              <div style={{ position:'relative' as const }}>
+                <span style={{ position:'absolute',left:12,top:'50%',transform:'translateY(-50%)' }}>
+                  <Phone size={14} color="#6b7280"/></span>
+                <input style={{ ...S.input,paddingLeft:36 }} value={phone}
+                  onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210" type="tel" required/>
+              </div>
             </div>
-            {error && <p style={{ fontSize:12,fontFamily:'var(--font-mono)',color:'#f87171',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',padding:'8px 12px',borderRadius:8 }}>{error}</p>}
+            {error && <Err msg={error}/>}
             <button type="submit" disabled={loading} style={S.btn}>
-              {loading ? <Loader2 size={15} style={{ animation:'spin 1s linear infinite' }} /> : <ArrowRight size={15} />}
-              {loading ? 'Signing in…' : 'Go to Dashboard'}
+              {loading ? <Loader2 size={15} style={{ animation:'spin 1s linear infinite' }}/> : <ArrowRight size={15}/>}
+              {loading ? 'Sending OTP…' : 'Send OTP'}
             </button>
-            <p style={{ fontSize:12,fontFamily:'var(--font-mono)',color:'#4b5563',textAlign:'center' as const }}>
-              Demo ID:{' '}
-              <button type="button" onClick={() => setLoginId('487b3114-80ba-4e64-8731-283be03f998e')}
-                style={{ background:'none',border:'none',color:'#16a34a',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-mono)',fontSize:12 }}>
-                demo-farmer-001
+            <p style={{ fontSize:11,fontFamily:'var(--font-mono)',color:'#4b5563',textAlign:'center' as const }}>
+              New farmers are registered automatically after OTP verification.
+            </p>
+          </form>
+        )}
+
+        {step === 'otp' && (
+          <form onSubmit={handleVerifyOtp} style={{ display:'flex',flexDirection:'column' as const,gap:20 }}>
+            <div>
+              <button type="button" onClick={() => { setStep('phone'); setError(''); }}
+                style={{ background:'none',border:'none',color:'#6b7280',cursor:'pointer',
+                  display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-mono)',fontSize:12,padding:0,marginBottom:12 }}>
+                <ChevronLeft size={14}/> Back
+              </button>
+              <h2 style={{ fontFamily:'var(--font-display)',fontSize:26,fontWeight:600,marginBottom:6 }}>Enter OTP</h2>
+              <p style={{ fontSize:14,color:'#9ca3af' }}>
+                6-digit code sent to <strong style={{ color:'#e5e7eb' }}>{phone}</strong>
+              </p>
+            </div>
+            <div>
+              <label style={S.label}>One-Time Password</label>
+              <input style={{ ...S.input,letterSpacing:'0.3em',fontSize:22,textAlign:'center' as const }}
+                value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+                placeholder="• • • • • •" maxLength={6} required/>
+            </div>
+            {error && <Err msg={error}/>}
+            <button type="submit" disabled={loading || otp.length < 6} style={S.btn}>
+              {loading ? <Loader2 size={15} style={{ animation:'spin 1s linear infinite' }}/> : <ArrowRight size={15}/>}
+              {loading ? 'Verifying…' : 'Verify & Continue'}
+            </button>
+            <p style={{ fontSize:11,fontFamily:'var(--font-mono)',color:'#4b5563',textAlign:'center' as const }}>
+              Didn't receive it?{' '}
+              <button type="button" onClick={handleSendOtp}
+                style={{ background:'none',border:'none',color:'#16a34a',cursor:'pointer',
+                  fontFamily:'var(--font-mono)',fontSize:11,textDecoration:'underline' }}>
+                Resend OTP
               </button>
             </p>
           </form>
-        ) : (
+        )}
+
+        {step === 'register' && (
           <form onSubmit={handleRegister} style={{ display:'flex',flexDirection:'column' as const,gap:14 }}>
             <div>
-              <h2 style={{ fontFamily:'var(--font-display)',fontSize:26,fontWeight:600,marginBottom:6 }}>Register your farm</h2>
-              <p style={{ fontSize:14,color:'#9ca3af' }}>We'll set up your insurance policy on-chain.</p>
+              <h2 style={{ fontFamily:'var(--font-display)',fontSize:26,fontWeight:600,marginBottom:6 }}>Set up your farm</h2>
+              <p style={{ fontSize:14,color:'#9ca3af' }}>First time? Takes 30 seconds.</p>
             </div>
-            {[['name','Full Name','Rajan Kumar'],['phone','Phone','+919876543210'],['wallet_address','MetaMask Wallet','0xYour…Wallet']].map(([k,l,ph]) => (
-              <div key={k}>
-                <label style={S.label}>{l}</label>
-                <input required style={S.input} value={(form as any)[k]} onChange={e => set(k as any, e.target.value)} placeholder={ph} />
-              </div>
-            ))}
+            <div>
+              <label style={S.label}>Full Name</label>
+              <input required style={S.input} value={form.name}
+                onChange={e => setField('name',e.target.value)} placeholder="Rajan Kumar"/>
+            </div>
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div>
                 <label style={S.label}>Crop Type</label>
-                <select style={S.input} value={form.crop_type} onChange={e => set('crop_type', e.target.value)}>
+                <select style={S.input} value={form.crop_type} onChange={e => setField('crop_type',e.target.value)}>
                   {CROPS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>)}
                 </select>
               </div>
               <div>
                 <label style={S.label}>Language</label>
-                <select style={S.input} value={form.language} onChange={e => set('language', e.target.value)}>
+                <select style={S.input} value={form.language} onChange={e => setField('language',e.target.value)}>
                   {LANGS.map(([c,l]) => <option key={c} value={c}>{l}</option>)}
                 </select>
               </div>
@@ -166,25 +206,40 @@ export default function LandingPage() {
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div>
                 <label style={S.label}>Latitude</label>
-                <input required type="number" step="0.0001" style={S.input} value={form.farm_lat||''} onChange={e => set('farm_lat',parseFloat(e.target.value))} placeholder="28.6139" />
+                <input required type="number" step="0.0001" style={S.input} value={form.farm_lat||''}
+                  onChange={e => setField('farm_lat',parseFloat(e.target.value))} placeholder="28.6139"/>
               </div>
               <div>
                 <label style={S.label}>Longitude</label>
-                <input required type="number" step="0.0001" style={S.input} value={form.farm_lon||''} onChange={e => set('farm_lon',parseFloat(e.target.value))} placeholder="77.2090" />
+                <input required type="number" step="0.0001" style={S.input} value={form.farm_lon||''}
+                  onChange={e => setField('farm_lon',parseFloat(e.target.value))} placeholder="77.2090"/>
               </div>
             </div>
             <div>
               <label style={S.label}>Farm Area (hectares)</label>
-              <input required type="number" step="0.1" min="0.1" style={S.input} value={form.farm_area_hectares||''} onChange={e => set('farm_area_hectares',parseFloat(e.target.value))} placeholder="3.5" />
+              <input required type="number" step="0.1" min="0.1" style={S.input} value={form.farm_area_hectares||''}
+                onChange={e => setField('farm_area_hectares',parseFloat(e.target.value))} placeholder="3.5"/>
             </div>
-            {error && <p style={{ fontSize:12,fontFamily:'var(--font-mono)',color:'#f87171',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',padding:'8px 12px',borderRadius:8 }}>{error}</p>}
+            {error && <Err msg={error}/>}
             <button type="submit" disabled={loading} style={S.btn}>
-              {loading ? <Loader2 size={15} style={{ animation:'spin 1s linear infinite' }} /> : <ArrowRight size={15} />}
-              {loading ? 'Registering…' : 'Register & Continue'}
+              {loading ? <Loader2 size={15} style={{ animation:'spin 1s linear infinite' }}/> : <ArrowRight size={15}/>}
+              {loading ? 'Setting up…' : 'Complete Registration'}
             </button>
+            <p style={{ fontSize:11,fontFamily:'var(--font-mono)',color:'#4b5563',textAlign:'center' as const }}>
+              Your wallet is created automatically — no MetaMask needed.
+            </p>
           </form>
         )}
       </div>
     </div>
+  );
+}
+
+function Err({ msg }: { msg: string }) {
+  return (
+    <p style={{ fontSize:12,fontFamily:'var(--font-mono)',color:'#f87171',background:'rgba(239,68,68,0.1)',
+      border:'1px solid rgba(239,68,68,0.3)',padding:'8px 12px',borderRadius:8,margin:0 }}>
+      {msg}
+    </p>
   );
 }
