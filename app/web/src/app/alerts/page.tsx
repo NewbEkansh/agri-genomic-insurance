@@ -16,7 +16,7 @@ export default function AlertsPage() {
     const id = localStorage.getItem('farmer_id');
     if (!id) { router.push('/'); return; }
     setLoading(true);
-    try { const r = await api.getPredictions(id); setPreds(r.predictions ?? []); }
+    try { const r = await api.getFarmerPredictions(id); setPreds(r.predictions ?? []); }
     finally { setLoading(false); }
   }
 
