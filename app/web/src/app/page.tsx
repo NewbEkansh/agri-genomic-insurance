@@ -61,7 +61,7 @@ export default function LandingPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError('');
     try {
-      const res = await api.registerFarmer({ ...form, phone: phone.trim() }, jwtToken);
+      const res = await api.registerFarmer({ ...form, phone: `+91${phone.trim().replace(/^\+91/, "")}` }, jwtToken);
       localStorage.setItem('farmer_id', res.farmer_id);
       router.push('/dashboard');
     } catch { setError('Registration failed. Please try again.'); }
