@@ -3,8 +3,8 @@ import 'package:http/http.dart' as http;
 import '../models/farmer_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000';
-  static const bool mockMode = true;
+  static const String baseUrl = 'http://51.20.64.136:8000';
+  static const bool mockMode = false;
 
   // ── Mock Data ──────────────────────────────────────────────────────────────
 
