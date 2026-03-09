@@ -7,11 +7,13 @@ async function handler(req: NextRequest, context: any) {
   const url = `${BACKEND}/${path.join('/')}`;
   const body = req.method !== 'GET' ? await req.text() : undefined;
   try {
-    const res = await fetch(url, {
-      method: req.method,
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': 'yieldshield-dev-key' },
-      body,
-    });
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'yieldshield-dev-key',
+    };
+    const auth = req.headers.get('Authorization');
+    if (auth) headers['Authorization'] = auth;
+    const res = await fetch(url, { method: req.method, headers, body });
     const data = await res.text();
     return new NextResponse(data, { status: res.status, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
