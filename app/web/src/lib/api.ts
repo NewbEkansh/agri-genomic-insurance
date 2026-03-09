@@ -1,6 +1,6 @@
 // lib/api.ts — YieldShield Web API Client
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.60.58.137:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_MODE !== 'false';
 
 export const DEFAULT_FARMER_ID =
