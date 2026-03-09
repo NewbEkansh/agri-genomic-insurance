@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [latestPred, setLatestPred] = useState<Prediction | null>(null);
 
   useEffect(() => {
-    const id = localStorage.getItem('farmer_id');
+    const id = localStorage.getItem('farmer_id') || '487b3114-80ba-4e64-8731-283be03f998e';
     if (!id) { router.push('/'); return; }
     Promise.all([api.getFarmer(id), api.getFarmHealth(id), api.getFarmerPolicies(id), api.getFarmerPredictions(id)])
       .then(([f, h, pol, preds]) => {
