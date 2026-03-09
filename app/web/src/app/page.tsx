@@ -38,7 +38,7 @@ export default function LandingPage() {
   async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError('');
     try {
-      await api.sendOtp(phone.trim());
+      await api.sendOtp(`+91${phone.trim().replace(/^\+91/, "")}`);
       setStep('otp');
     } catch { setError('Could not send OTP. Check the number and try again.'); }
     finally { setLoading(false); }
@@ -48,7 +48,7 @@ export default function LandingPage() {
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError('');
     try {
-      const res = await api.verifyOtp(phone.trim(), otp.trim());
+      const res = await api.verifyOtp(`+91${phone.trim().replace(/^\+91/, "")}`, otp.trim());
       localStorage.setItem('token', res.token);
       localStorage.setItem('farmer_id', res.farmer_id);
       if (res.is_new_farmer) { setJwtToken(res.token); setStep('register'); }
