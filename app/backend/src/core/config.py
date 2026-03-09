@@ -8,40 +8,46 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # ── AWS ───────────────────────────────────────────────────────────────────
-    AWS_REGION: str = "ap-south-1"
+    AWS_REGION: str = "eu-north-1"
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
 
-    # DynamoDB table names
+    # DynamoDB tables
     TABLE_FARMERS: str = "yieldshield-farmers"
     TABLE_POLICIES: str = "yieldshield-policies"
     TABLE_PREDICTIONS: str = "yieldshield-predictions"
     TABLE_PAYOUT_LOGS: str = "yieldshield-payout-logs"
+    TABLE_OTPS: str = "yieldshield-otps"
+
+    # S3
+    S3_BUCKET_CROPS: str = "yieldshield-crop-images"
 
     # SNS
     SNS_ALERT_TOPIC_ARN: str = ""
 
     # Bedrock
-    BEDROCK_MODEL_ID: str = "anthropic.claude-haiku-4-5-20251001"
+    BEDROCK_MODEL_ID: str = "anthropic.claude-3-haiku-20240307-v1:0"
 
     # ── Blockchain (Sepolia) ──────────────────────────────────────────────────
     SEPOLIA_RPC_URL: str = ""
     ORACLE_WALLET_ADDRESS: str = ""
-    ORACLE_PRIVATE_KEY: str = ""          # Set via .env only — never hardcode
+    ORACLE_PRIVATE_KEY: str = ""
     CONTRACT_ADDRESS: str = ""
 
     # ── External APIs ─────────────────────────────────────────────────────────
     OPENWEATHER_API_KEY: str = ""
     AGROMONITORING_API_KEY: str = ""
 
-    # ── Risk / Fraud Thresholds ───────────────────────────────────────────────
-    PAYOUT_TRIGGER_THRESHOLD: float = 0.85   # AI confidence needed to trigger payout
-    EARLY_WARNING_THRESHOLD: float = 0.60    # AI confidence for early warning SMS
-    REGIONAL_CONSENSUS_MIN: float = 0.30     # Min % of nearby farms also flagged
-    REGIONAL_RADIUS_KM: float = 5.0          # Radius for regional fraud check
-    FRAUD_PAYOUT_MULTIPLIER: float = 0.65    # Payout % when consensus not met
-
+    # ── Auth ──────────────────────────────────────────────────────────────────
+    JWT_SECRET: str = "yieldshield-jwt-secret-change-in-production"
     INTERNAL_API_KEY: str = "yieldshield-dev-key"
+
+    # ── Risk thresholds ───────────────────────────────────────────────────────
+    PAYOUT_TRIGGER_THRESHOLD: float = 0.85
+    EARLY_WARNING_THRESHOLD: float = 0.60
+    REGIONAL_CONSENSUS_MIN: float = 0.30
+    REGIONAL_RADIUS_KM: float = 5.0
+    FRAUD_PAYOUT_MULTIPLIER: float = 0.65
 
     class Config:
         env_file = ".env"

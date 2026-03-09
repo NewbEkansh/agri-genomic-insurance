@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
-from src.api.routes import farmers, policies, predictions, health
+from src.api.routes import farmers, policies, predictions, health, images, auth
 
 app = FastAPI(
     title="YieldShield API",
@@ -19,10 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router,      prefix="/health",      tags=["Health"])
-app.include_router(farmers.router,     prefix="/farmers",     tags=["Farmers"])
-app.include_router(policies.router,    prefix="/policies",    tags=["Policies"])
-app.include_router(predictions.router, prefix="/predictions", tags=["Predictions"])
+app.include_router(health.router,       prefix="/health",       tags=["Health"])
+app.include_router(auth.router,         prefix="/auth",         tags=["Auth"])
+app.include_router(farmers.router,      prefix="/farmers",      tags=["Farmers"])
+app.include_router(policies.router,     prefix="/policies",     tags=["Policies"])
+app.include_router(predictions.router,  prefix="/predictions",  tags=["Predictions"])
+app.include_router(images.router,       prefix="/images",       tags=["Images"])
 
-# AWS Lambda entry point (Mangum wraps the ASGI app)
+# AWS Lambda entry point
 handler = Mangum(app, lifespan="off")
