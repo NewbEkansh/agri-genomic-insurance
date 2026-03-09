@@ -24,9 +24,12 @@ class Language(str, Enum):
 
 
 class FarmerCreate(BaseModel):
+    """
+    Registration form filled by farmer.
+    No wallet_address needed — backend creates it automatically.
+    """
     name: str
-    phone: str
-    wallet_address: str
+    phone: str                              # Must match the phone used for OTP
     crop_type: CropType
     farm_lat: float
     farm_lon: float
@@ -35,7 +38,9 @@ class FarmerCreate(BaseModel):
 
 
 class FarmerDB(FarmerCreate):
+    """Full farmer record as stored in DynamoDB."""
     farmer_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    wallet_address: Optional[str] = None   # Auto-assigned by wallet_service
     created_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
